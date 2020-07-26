@@ -15,6 +15,7 @@ import io.reactivex.rxjava3.core.Observable
 import io.reactivex.rxjava3.core.ObservableEmitter
 import io.reactivex.rxjava3.disposables.CompositeDisposable
 import io.reactivex.rxjava3.disposables.Disposable
+import io.reactivex.rxjava3.observables.ConnectableObservable
 import java.util.concurrent.*
 
 class MainFragment : Fragment() {
@@ -29,8 +30,13 @@ class MainFragment : Fragment() {
 
     // MARK: - Properties
     private lateinit var viewModel: MainViewModel
+
     private lateinit var resultObservable: Observable<String>
     private lateinit var observableEmitter: ObservableEmitter<String>
+
+    // Connectable observable
+    private lateinit var connectableObservable: ConnectableObservable<Long>
+    private lateinit var connectedObservable: Disposable
 
     private val countValue: String
         get() = countEditText.text.toString()
@@ -43,6 +49,9 @@ class MainFragment : Fragment() {
     private lateinit var observableIntervalTriggerButton: Button
     private lateinit var observableFromTriggerButton: Button
     private lateinit var observableStartTriggerButton: Button
+    private lateinit var observableSubscribeTriggerButton: Button
+    private lateinit var observableConnectTriggerButton: Button
+    private lateinit var observableDisconnectTriggerButton: Button
 
     private lateinit var countEditText: EditText
     private lateinit var clearButton: Button
@@ -63,6 +72,9 @@ class MainFragment : Fragment() {
             observableIntervalTriggerButton = findViewById(R.id.observable_interval_trigger)
             observableFromTriggerButton = findViewById(R.id.observable_from_trigger)
             observableStartTriggerButton = findViewById(R.id.observable_start_trigger)
+            observableSubscribeTriggerButton = findViewById(R.id.observable_connectable_subscribe_trigger)
+            observableConnectTriggerButton = findViewById(R.id.observable_connect_trigger)
+            observableDisconnectTriggerButton = findViewById(R.id.observable_disconnect_trigger)
 
             // Count
             countEditText = findViewById(R.id.countEditText)
@@ -87,9 +99,20 @@ class MainFragment : Fragment() {
         resultObservable = Observable.create<String> { observable ->
             observableEmitter = observable
         }
+
+        connectableObservable = Observable
+            .interval(100, TimeUnit.MILLISECONDS)
+            .publish()
     }
 
     private fun bind() {
+
+        resultObservable
+            .subscribe {
+                Log.d(TAG, "Observable just:: emit $it")
+                observableResultTextView.text = it
+            }
+            .disposed(by = disposeBag)
 
         observableJustTriggerButton
             .clicks()
@@ -133,17 +156,31 @@ class MainFragment : Fragment() {
             }
             .disposed(by = disposeBag)
 
-        resultObservable
+        observableSubscribeTriggerButton
+            .clicks()
             .subscribe {
-                Log.d(TAG, "Observable just:: emit $it")
-                observableResultTextView.text = it
+                subscribeConnectableObservable()
+            }
+            .disposed(by = disposeBag)
+
+        observableConnectTriggerButton
+            .clicks()
+            .subscribe {
+                observableConnect()
+            }
+            .disposed(by = disposeBag)
+
+        observableDisconnectTriggerButton
+            .clicks()
+            .subscribe {
+                observableDisconnect()
             }
             .disposed(by = disposeBag)
 
         clearButton
             .clicks()
             .subscribe {
-                observableResultTextView.text = ""
+                observableEmitter.onNext("")
             }
             .disposed(by = disposeBag)
 
@@ -170,9 +207,10 @@ class MainFragment : Fragment() {
     private fun observableRange() {
         Observable
             .range(0, countValue.toInt())
+            .map { it -> it * 10 }
             .subscribe {
                 val result = "${observableResultTextView.text} $it"
-                observableResultTextView.text = result
+                observableEmitter.onNext(result)
             }
             .disposed(disposeBag)
     }
@@ -185,7 +223,7 @@ class MainFragment : Fragment() {
             .subscribe {
                 Log.d(TAG, "observableRepeat: $it")
                 val result = "${observableResultTextView.text} $it"
-                observableResultTextView.text = result
+                observableEmitter.onNext(result)
             }
             .disposed(by = disposeBag)
     }
@@ -195,7 +233,7 @@ class MainFragment : Fragment() {
             .interval(1000, TimeUnit.MILLISECONDS)
             .subscribe {
                 Log.d(TAG, "observableInterval: $it")
-                observableResultTextView.text = it.toString()
+                observableEmitter.onNext(it.toString())
             }
             .disposed(by = disposeBag)
     }
@@ -209,7 +247,7 @@ class MainFragment : Fragment() {
                 Log.d(TAG, "observableFrom: size - ${it.size}")
                 for (element in it) {
                     val result = "${observableResultTextView.text} $element"
-                    observableResultTextView.text = result
+                    observableEmitter.onNext(result)
                 }
             }
             .disposed(by = disposeBag)
@@ -227,10 +265,32 @@ class MainFragment : Fragment() {
         Observable.fromCallable(callable)
             .subscribe {
                 Log.d(TAG, "observableFrom: $it")
-                observableResultTextView.text = it
+                observableEmitter.onNext(it)
             }
             .disposed(by = disposeBag)
     }
+
+    private fun subscribeConnectableObservable() {
+        connectableObservable
+            .subscribe {
+                Log.d(TAG, "connectable Observable result $it")
+                observableEmitter.onNext(it.toString())
+            }
+            .disposed(by = disposeBag)
+    }
+
+    private fun observableConnect() {
+        connectedObservable = connectableObservable.connect()
+    }
+
+    private fun observableDisconnect() {
+        if (::connectedObservable.isInitialized == false) {
+            Log.d(TAG, "observableConnect: not initialized")
+            return
+        }
+        connectedObservable.dispose()
+    }
+
 }
 
 fun Disposable.disposed(by: CompositeDisposable): Disposable {
