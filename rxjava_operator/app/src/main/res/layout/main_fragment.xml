@@ -144,6 +144,34 @@
             android:layout_weight="1"
             android:layout_width="match_parent"
             android:layout_height="0dp"
+            android:orientation="horizontal"
+            >
+
+            <Button
+                android:id="@+id/single_create_trigger"
+                android:text="Single_Create"
+                android:layout_weight="1"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"/>
+
+            <Button
+                android:text=""
+                android:layout_weight="1"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"/>
+
+            <Button
+                android:text=""
+                android:layout_weight="1"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"/>
+
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_weight="1"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
             android:layout_gravity="center"
             android:orientation="horizontal"
             >

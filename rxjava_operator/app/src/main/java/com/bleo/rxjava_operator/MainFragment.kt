@@ -13,10 +13,14 @@ import androidx.lifecycle.ViewModelProvider
 import com.jakewharton.rxbinding4.view.clicks
 import io.reactivex.rxjava3.core.Observable
 import io.reactivex.rxjava3.core.ObservableEmitter
+import io.reactivex.rxjava3.core.Single
 import io.reactivex.rxjava3.disposables.CompositeDisposable
 import io.reactivex.rxjava3.disposables.Disposable
 import io.reactivex.rxjava3.observables.ConnectableObservable
+import java.lang.Error
+import java.lang.RuntimeException
 import java.util.concurrent.*
+import kotlin.Exception as KotlinException
 
 class MainFragment : Fragment() {
 
@@ -52,6 +56,7 @@ class MainFragment : Fragment() {
     private lateinit var observableSubscribeTriggerButton: Button
     private lateinit var observableConnectTriggerButton: Button
     private lateinit var observableDisconnectTriggerButton: Button
+    private lateinit var singleCreateTriggerButton: Button
 
     private lateinit var countEditText: EditText
     private lateinit var clearButton: Button
@@ -75,6 +80,7 @@ class MainFragment : Fragment() {
             observableSubscribeTriggerButton = findViewById(R.id.observable_connectable_subscribe_trigger)
             observableConnectTriggerButton = findViewById(R.id.observable_connect_trigger)
             observableDisconnectTriggerButton = findViewById(R.id.observable_disconnect_trigger)
+            singleCreateTriggerButton = findViewById(R.id.single_create_trigger)
 
             // Count
             countEditText = findViewById(R.id.countEditText)
@@ -177,6 +183,13 @@ class MainFragment : Fragment() {
             }
             .disposed(by = disposeBag)
 
+        singleCreateTriggerButton
+            .clicks()
+            .subscribe {
+                singleCreate()
+            }
+            .disposed(by = disposeBag)
+
         clearButton
             .clicks()
             .subscribe {
@@ -202,6 +215,14 @@ class MainFragment : Fragment() {
                 observableEmitter.onNext(it)
             }
             .disposed(disposeBag)
+
+        val disposable = Observable
+            .just(1, 2,3, 4, 5)
+            .subscribe {
+                println(it)
+            }
+
+        disposable.dispose()
     }
 
     private fun observableRange() {
@@ -289,6 +310,29 @@ class MainFragment : Fragment() {
             return
         }
         connectedObservable.dispose()
+    }
+
+    private fun singleCreate() {
+        Single.create<String> {
+            // Do something..
+            when (countValue.toInt()) {
+                200 -> {
+                    it.onSuccess("Matched!")// case 1: disposed
+                }
+                400 -> {
+                    it.onError(Throwable("Code: 400"))
+                }
+                else -> {
+                    throw RuntimeException("Unknown response") // case 2: throw
+                }
+            }
+        }.subscribe({
+            // Success
+            Log.d(TAG, "singleCreate: Success - $it")
+        }, {
+            // Error
+            Log.d(TAG, "singleCreate: Error!! $it")
+        })
     }
 
 }
