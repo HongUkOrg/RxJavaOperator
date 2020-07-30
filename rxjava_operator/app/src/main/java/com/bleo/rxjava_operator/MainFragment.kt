@@ -11,12 +11,14 @@ import android.widget.EditText
 import android.widget.TextView
 import androidx.lifecycle.ViewModelProvider
 import com.jakewharton.rxbinding4.view.clicks
+import com.jakewharton.rxrelay3.BehaviorRelay
 import io.reactivex.rxjava3.core.Observable
 import io.reactivex.rxjava3.core.ObservableEmitter
 import io.reactivex.rxjava3.core.Single
 import io.reactivex.rxjava3.disposables.CompositeDisposable
 import io.reactivex.rxjava3.disposables.Disposable
 import io.reactivex.rxjava3.observables.ConnectableObservable
+import io.reactivex.rxjava3.subjects.BehaviorSubject
 import java.lang.Error
 import java.lang.RuntimeException
 import java.util.concurrent.*
@@ -57,14 +59,17 @@ class MainFragment : Fragment() {
     private lateinit var observableConnectTriggerButton: Button
     private lateinit var observableDisconnectTriggerButton: Button
     private lateinit var singleCreateTriggerButton: Button
+    private lateinit var behaviorSubjectTriggerButton: Button
+    private lateinit var behaviorRelayTriggerButton: Button
+
+    private lateinit var behaviorSubjectTextView: TextView
+    private lateinit var behaviorRelayTextView: TextView
 
     private lateinit var countEditText: EditText
     private lateinit var clearButton: Button
 
     private lateinit var disposeResultTextView: TextView
     private lateinit var disposeTriggerButton: Button
-
-    private var count: Int = 0
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
         return inflater.inflate(R.layout.main_fragment, container, false).apply {
@@ -81,10 +86,15 @@ class MainFragment : Fragment() {
             observableConnectTriggerButton = findViewById(R.id.observable_connect_trigger)
             observableDisconnectTriggerButton = findViewById(R.id.observable_disconnect_trigger)
             singleCreateTriggerButton = findViewById(R.id.single_create_trigger)
+            behaviorSubjectTriggerButton = findViewById(R.id.behavior_subject_trigger)
+            behaviorRelayTriggerButton = findViewById(R.id.behavior_relay_trigger)
 
             // Count
             countEditText = findViewById(R.id.countEditText)
             clearButton = findViewById(R.id.clearButton)
+
+            behaviorSubjectTextView = findViewById(R.id.behavior_subject_textview)
+            behaviorRelayTextView = findViewById(R.id.behavior_relay_textview)
 
             // Dispose
             disposeResultTextView = findViewById(R.id.dispose_result_textview)
@@ -92,6 +102,11 @@ class MainFragment : Fragment() {
 
             setupObservable()
         }
+    }
+
+    override fun onDestroyView() {
+        super.onDestroyView()
+        disposeBag.dispose()
     }
 
     override fun onActivityCreated(savedInstanceState: Bundle?) {
@@ -117,6 +132,18 @@ class MainFragment : Fragment() {
             .subscribe {
                 Log.d(TAG, "Observable just:: emit $it")
                 observableResultTextView.text = it
+            }
+            .disposed(by = disposeBag)
+
+        viewModel.countBehaviorSubject
+            .subscribe {
+                behaviorSubjectTextView.text = it
+            }
+            .disposed(by = disposeBag)
+
+        viewModel.countBehaviorRelay
+            .subscribe {
+                behaviorRelayTextView.text = it
             }
             .disposed(by = disposeBag)
 
@@ -190,6 +217,20 @@ class MainFragment : Fragment() {
             }
             .disposed(by = disposeBag)
 
+        behaviorSubjectTriggerButton
+            .clicks()
+            .subscribe {
+                viewModel.tapBehaviorSubjectButton()
+            }
+            .disposed(by = disposeBag)
+
+        behaviorRelayTriggerButton
+            .clicks()
+            .subscribe {
+                viewModel.tapBehaviorRelayButton()
+            }
+            .disposed(by = disposeBag)
+
         clearButton
             .clicks()
             .subscribe {
@@ -209,20 +250,12 @@ class MainFragment : Fragment() {
     }
 
     private fun observableJust() {
-        Observable
+        val disposable = Observable
             .just(countValue)
             .subscribe {
                 observableEmitter.onNext(it)
             }
             .disposed(disposeBag)
-
-        val disposable = Observable
-            .just(1, 2,3, 4, 5)
-            .subscribe {
-                println(it)
-            }
-
-        disposable.dispose()
     }
 
     private fun observableRange() {
