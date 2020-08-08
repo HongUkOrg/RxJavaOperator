@@ -20,7 +20,7 @@ class MainViewModel : ViewModel() {
 
     fun tapBehaviorRelayButton() {
         val result = countBehaviorRelay.value.toInt() + 10
-        countBehaviorRelay.accept(result.toString())
+        countBehaviorRelay.accept(result.toString()) // onNext와 비슷
 
         if (result > 50) {
             countBehaviorRelay.onErrorComplete()

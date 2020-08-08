@@ -12,6 +12,7 @@ import android.widget.TextView
 import androidx.lifecycle.ViewModelProvider
 import com.jakewharton.rxbinding4.view.clicks
 import com.jakewharton.rxrelay3.BehaviorRelay
+import com.jakewharton.rxrelay3.PublishRelay
 import io.reactivex.rxjava3.core.Observable
 import io.reactivex.rxjava3.core.ObservableEmitter
 import io.reactivex.rxjava3.core.Single
@@ -19,6 +20,8 @@ import io.reactivex.rxjava3.disposables.CompositeDisposable
 import io.reactivex.rxjava3.disposables.Disposable
 import io.reactivex.rxjava3.observables.ConnectableObservable
 import io.reactivex.rxjava3.subjects.BehaviorSubject
+import io.reactivex.rxjava3.subjects.PublishSubject
+import kotlinx.android.synthetic.main.main_fragment.*
 import java.lang.Error
 import java.lang.RuntimeException
 import java.util.concurrent.*
@@ -48,57 +51,14 @@ class MainFragment : Fragment() {
         get() = countEditText.text.toString()
 
     // MARK: - UI
-    private lateinit var observableResultTextView: TextView
-    private lateinit var observableJustTriggerButton: Button
-    private lateinit var observableRangeTriggerButton: Button
-    private lateinit var observableRepeatTriggerButton: Button
-    private lateinit var observableIntervalTriggerButton: Button
-    private lateinit var observableFromTriggerButton: Button
-    private lateinit var observableStartTriggerButton: Button
-    private lateinit var observableSubscribeTriggerButton: Button
-    private lateinit var observableConnectTriggerButton: Button
-    private lateinit var observableDisconnectTriggerButton: Button
-    private lateinit var singleCreateTriggerButton: Button
-    private lateinit var behaviorSubjectTriggerButton: Button
-    private lateinit var behaviorRelayTriggerButton: Button
-
-    private lateinit var behaviorSubjectTextView: TextView
-    private lateinit var behaviorRelayTextView: TextView
 
     private lateinit var countEditText: EditText
     private lateinit var clearButton: Button
 
     private lateinit var disposeResultTextView: TextView
-    private lateinit var disposeTriggerButton: Button
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
         return inflater.inflate(R.layout.main_fragment, container, false).apply {
-
-            // Observable
-            observableResultTextView = findViewById(R.id.observable_just_result)
-            observableJustTriggerButton = findViewById(R.id.observable_just_trigger)
-            observableRangeTriggerButton = findViewById(R.id.observable_range_trigger)
-            observableRepeatTriggerButton = findViewById(R.id.observable_repeat_trigger)
-            observableIntervalTriggerButton = findViewById(R.id.observable_interval_trigger)
-            observableFromTriggerButton = findViewById(R.id.observable_from_trigger)
-            observableStartTriggerButton = findViewById(R.id.observable_start_trigger)
-            observableSubscribeTriggerButton = findViewById(R.id.observable_connectable_subscribe_trigger)
-            observableConnectTriggerButton = findViewById(R.id.observable_connect_trigger)
-            observableDisconnectTriggerButton = findViewById(R.id.observable_disconnect_trigger)
-            singleCreateTriggerButton = findViewById(R.id.single_create_trigger)
-            behaviorSubjectTriggerButton = findViewById(R.id.behavior_subject_trigger)
-            behaviorRelayTriggerButton = findViewById(R.id.behavior_relay_trigger)
-
-            // Count
-            countEditText = findViewById(R.id.countEditText)
-            clearButton = findViewById(R.id.clearButton)
-
-            behaviorSubjectTextView = findViewById(R.id.behavior_subject_textview)
-            behaviorRelayTextView = findViewById(R.id.behavior_relay_textview)
-
-            // Dispose
-            disposeResultTextView = findViewById(R.id.dispose_result_textview)
-            disposeTriggerButton = findViewById(R.id.dispose_trigger)
 
             setupObservable()
         }
@@ -130,7 +90,7 @@ class MainFragment : Fragment() {
 
         resultObservable
             .subscribe {
-                Log.d(TAG, "Observable just:: emit $it")
+                Log.d(TAG, "Emit: $it")
                 observableResultTextView.text = it
             }
             .disposed(by = disposeBag)
@@ -256,6 +216,7 @@ class MainFragment : Fragment() {
                 observableEmitter.onNext(it)
             }
             .disposed(disposeBag)
+
     }
 
     private fun observableRange() {
@@ -348,6 +309,8 @@ class MainFragment : Fragment() {
     private fun singleCreate() {
         Single.create<String> {
             // Do something..
+            // 퍼미션 받고 콜백핸들러로 값을 받아옴
+            // API 콜을 통해서 repsonse값을 받아온다던가..!?
             when (countValue.toInt()) {
                 200 -> {
                     it.onSuccess("Matched!")// case 1: disposed
